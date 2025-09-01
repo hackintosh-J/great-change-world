@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fractal Explorer</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; text-align:center; background-color:#f4f4f4; }
+    header { background-color:#333; padding: 10px; }
+    header nav a { color: white; margin-right: 15px; text-decoration: none; }
+    #canvasContainer { margin: 20px auto; width: 600px; height: 400px; border:1px solid #ccc; background-color:#fff; }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="fractal.html">Fractal Explorer</a>
+      <a href="about.html">About</a>
+    </nav>
+  </header>
+  <h2>Fractal Explorer: Mandelbrot Set</h2>
+  <p>Use this interactive canvas to explore the beautiful Mandelbrot fractal. Click or drag to zoom in.</p>
+  <div id="canvasContainer">
+    <canvas id="fractalCanvas" width="600" height="400"></canvas>
+  </div>
+  <script>
+    const canvas = document.getElementById('fractalCanvas');
+    const ctx = canvas.getContext('2d');
+    let xmin = -2.5, xmax = 1, ymin = -1.5, ymax = 1.5;
+
+    function drawFractal() {
+      const width = canvas.width;
+      const height = canvas.height;
+      const maxIter = 100;
+      const imageData = ctx.createImageData(width, height);
+      const data = imageData.data;
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const cx = xmin + (x / width) * (xmax - xmin);
+          const cy = ymin + (y / height) * (ymax - ymin);
+          let zx = 0, zy = 0;
+          let iter = 0;
+          while (zx * zx + zy * zy <= 4 && iter < maxIter) {
+            const xtmp = zx * zx - zy * zy + cx;
+            zy = 2 * zx * zy + cy;
+            zx = xtmp;
+            iter++;
+          }
+          const idx = 4 * (y * width + x);
+          const color = iter == maxIter ? 0 : 255 - Math.floor((iter / maxIter) * 255);
+          data[idx] = color;
+          data[idx + 1] = color;
+          data[idx + 2] = color;
+          data[idx + 3] = 255;
+        }
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
+    drawFractal();
+
+    let isDragging = false;
+    let dragStartX, dragStartY;
+    canvas.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      dragStartX = e.offsetX;
+      dragStartY = e.offsetY;
+    });
+    canvas.addEventListener('mouseup', (e) => {
+      if (!isDragging) return;
+      isDragging = false;
+      const xEnd = e.offsetX;
+      const yEnd = e.offsetY;
+      const xStartMin = Math.min(dragStartX, xEnd);
+      const xStartMax = Math.max(dragStartX, xEnd);
+      const yStartMin = Math.min(dragStartY, yEnd);
+      const yStartMax = Math.max(dragStartY, yEnd);
+      const width = canvas.width;
+      const height = canvas.height;
+      const newXmin = xmin + (xStartMin / width) * (xmax - xmin);
+      const newXmax = xmin + (xStartMax / width) * (xmax - xmin);
+      const newYmin = ymin + (yStartMin / height) * (ymax - ymin);
+      const newYmax = ymin + (yStartMax / height) * (ymax - ymin);
+      xmin = newXmin;
+      xmax = newXmax;
+      ymin = newYmin;
+      ymax = newYmax;
+      drawFractal();
+    });
+    canvas.addEventListener('click', (e) => {
+      const clickX = e.offsetX;
+      const clickY = e.offsetY;
+      const width = canvas.width;
+      const height = canvas.height;
+      const cx = xmin + (clickX / width) * (xmax - xmin);
+      const cy = ymin + (clickY / height) * (ymax - ymin);
+      const zoomFactor = 0.5;
+      const xRange = (xmax - xmin) * zoomFactor;
+      const yRange = (ymax - ymin) * zoomFactor;
+      xmin = cx - xRange / 2;
+      xmax = cx + xRange / 2;
+      ymin = cy - yRange / 2;
+      ymax = cy + yRange / 2;
+      drawFractal();
+    });
+  </script>
+</body>
+</html>
